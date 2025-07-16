@@ -7,14 +7,14 @@
 
 ---
 
-## I. Introduction: Why Your RAG Evals Are Probably Wrong (5 minutes)
+## I. Introduction: Why Most RAG Evaluations Miss the Mark (5 minutes)
 
 ### The Problem
-- Most teams are flying blind with RAG evaluation
-- "The answer looks wrong" is not actionable debugging
+- Most teams lack systematic RAG evaluation approaches
+- "The answer looks wrong" provides no actionable debugging path
 - Silent failures accumulate as technical debt
 
-### The Promise
+### What You'll Get
 By the end of this talk, you'll have a specific checklist of what to look for when evaluating:
 - Your chunking & indexing pipeline
 - Your retrieval (both relevance AND sufficiency)
@@ -29,7 +29,7 @@ RAG failures happen in predictable stages. Think of it as a diagnostic funnel:
 ```
 Input → Chunking → Indexing → Retrieval → Generation → Output
 ```
-Each stage can "leak" - and you need to know where.
+Each stage can break down, and you need to know where.
 
 ### Real Example: "Wrong Answer" Diagnosis
 **Problem**: System says "The company was founded in 2020" when correct answer is 2019.
@@ -44,183 +44,190 @@ Each stage can "leak" - and you need to know where.
 
 ## III. Evaluating Your Chunking & Indexing (10 minutes)
 
-### What to Look For: Chunk Quality
+### Check 1: Information Completeness
 
-#### 1. Information Completeness
-**Bad Example**:
+**How it goes wrong**: Important information gets split across chunks
 ```
 Chunk 1: "Apple Inc. was founded by Steve Jobs, Steve Wozniak"
 Chunk 2: "and Ronald Wayne in April 1976 in Los Altos, California."
 ```
-**Evaluation**: Can you answer "Who founded Apple and when?" from a single chunk?
 
-#### 2. Semantic Coherence
-**Test**: Random sampling + human review
-- Take 50 random chunks
-- Ask: "Does this chunk make sense on its own?"
-- Target: >90% coherent
+**Test to run**: Sample 50 chunks, verify each chunk can standalone answer questions about its content
+**What to measure**: % of chunks that contain complete thoughts/facts (target: >90%)
 
-#### 3. Chunk Enrichment Quality
-**What to Measure**:
-- Metadata accuracy (titles, tags, summaries)
-- Entity extraction completeness
-- Cross-reference linking
+### Check 2: Semantic Coherence
 
-**Practical Test**:
+**How it goes wrong**: Chunks break mid-sentence or mix unrelated topics
+```
+Bad chunk: "...quarterly results exceeded expectations. In other news, our new coffee machine arrived..."
+```
+
+**Test to run**: Random sample + human review asking "Does this chunk make sense on its own?"
+**What to measure**: Coherence rate (target: >95%)
+
+### Check 3: Metadata Accuracy
+
+**How it goes wrong**: Titles, tags, or summaries don't match chunk content
+```
+Chunk content: "How to reset your password"
+Metadata title: "User authentication overview"
+```
+
+**Test to run**: Automated verification that metadata elements appear in chunk content
+**What to measure**: 
 ```python
 # For each chunk, verify:
 assert chunk.metadata['title'] in chunk.content
-assert len(chunk.entities) > 0  # If domain has entities
 assert chunk.summary != chunk.content[:100]  # Not just truncation
 ```
 
-### What to Look For: Index Coverage
+### Check 4: Knowledge Coverage
 
-#### Data Gap Analysis
-**Evaluation Method**:
-1. Create questions that SHOULD be answerable from your corpus
-2. Search for chunks that contain answers
-3. Measure: What % of expected answers exist in searchable form?
+**How it goes wrong**: Critical information exists in docs but isn't findable
+```
+Question: "What's our refund policy for enterprise customers?"
+Search result: 0 relevant chunks found
+Reality: Policy exists in legal docs but wasn't indexed properly
+```
 
-**Example Test Set**:
-```
-Q: "What's our refund policy for enterprise customers?"
-Expected: Should find 3-5 relevant chunks
-Actual: Found 0 chunks → Coverage gap identified
-```
+**Test to run**: Create 20-30 questions that should be answerable from your corpus, search for relevant chunks
+**What to measure**: Coverage rate (% of expected answers that are findable via search)
 
 ---
 
 ## IV. Evaluating Your Retrieval: Relevance AND Sufficiency (15 minutes)
 
-### Beyond Simple Relevance: The Two-Part Test
+### Check 1: Context Relevance
 
-#### Part 1: Relevance (Are retrieved chunks on-topic?)
-**Metric**: Context Relevance
-**How to Measure**:
-- Sample 100 query-retrieved chunk pairs
-- Human/LLM judge: "Is this chunk relevant to answering the question?"
-- Target: >85% relevant
-
-#### Part 2: Sufficiency (Can you actually answer from retrieved chunks?)
-**Metric**: Answer-ability
-**How to Measure**:
-- For each query, give only retrieved chunks to human
-- Ask: "Can you fully answer the question from this context?"
-- Target: >75% answerable
-
-### Practical Examples of Retrieval Failures
-
-#### Example 1: High Relevance, Low Sufficiency
-**Query**: "How do I reset my password on mobile?"
-**Retrieved**: 
-- Chunk 1: "Password reset is available in settings" ✓ (relevant)
-- Chunk 2: "Mobile app has various security features" ✓ (relevant)
-- Chunk 3: "Contact support for account issues" ✓ (relevant)
-
-**Problem**: All relevant, but missing the actual step-by-step instructions!
-
-#### Example 2: The "Goldilocks Problem"
-**Query**: "What integrations does our API support?"
-**Too Little**: Only retrieves 1 chunk mentioning "Slack integration"
-**Too Much**: Retrieves 15 chunks with every mention of the word "integration"
-**Just Right**: 3-5 chunks covering main integration categories with specifics
-
-### What to Measure: Retrieval Metrics That Matter
-
-#### 1. Hit Rate (Did we find anything useful?)
-```python
-def calculate_hit_rate(queries, retrieved_chunks):
-    hits = 0
-    for query in queries:
-        chunks = retrieved_chunks[query.id]
-        if any(chunk.is_relevant for chunk in chunks):
-            hits += 1
-    return hits / len(queries)
+**How it goes wrong**: System retrieves topically related but ultimately useless chunks
+```
+Query: "How do I reset my password on mobile?"
+Retrieved chunks:
+- "Password security is important for user accounts"
+- "Mobile apps should follow security best practices"  
+- "Users often forget their login credentials"
 ```
 
-#### 2. Precision@K (How good are our top results?)
-- Measure at K=3, K=5, K=10
-- Most important: Precision@3 (what actually gets sent to LLM)
+**Test to run**: Sample 100 query-chunk pairs, judge relevance with "Is this chunk helpful for answering the question?"
+**What to measure**: Relevance rate (target: >85%)
 
-#### 3. Context Sufficiency (New metric to track)
-```python
-def evaluate_sufficiency(query, retrieved_chunks):
-    """Can a human answer the query from retrieved chunks alone?"""
-    # Implementation: LLM-as-judge or human evaluation
-    return is_answerable(query, retrieved_chunks)
+### Check 2: Answer Sufficiency  
+
+**How it goes wrong**: Retrieved chunks are relevant but incomplete
+```
+Query: "How do I reset my password on mobile?"
+Retrieved chunks:
+- "Password reset is available in settings" (relevant but incomplete)
+- "Mobile app has various security features" (relevant but vague)
 ```
 
-### Retrieval Red Flags to Watch For
+**Test to run**: Give only retrieved chunks to humans, ask "Can you fully answer the question from this context?"
+**What to measure**: Sufficiency rate (target: >75%)
 
-#### 1. The "Semantic Similarity Trap"
-**Problem**: Vector search finds semantically similar but wrong chunks
-**Example**: 
-- Query: "2023 revenue figures"
-- Retrieved: "2022 revenue was strong" (similar, but wrong year)
+### Check 3: Retrieval Precision
 
-**Test**: Create temporal/specific queries and verify year/specificity matching
+**How it goes wrong**: System buries good results among irrelevant ones
+```
+Query: "API rate limits"
+Top 3 results:
+1. "API documentation overview" (not specific)
+2. "Rate limiting best practices" (generic)
+3. "Our API supports 1000 requests/minute" (exactly what we want)
+```
 
-#### 2. The "Missing Context" Problem
-**Problem**: Answer exists but split across multiple chunks that aren't co-retrieved
-**Test**: Manually verify that multi-chunk answers can be assembled
+**Test to run**: Manually label top 3 results for 50 test queries
+**What to measure**: Precision@3 (% of top 3 results that are useful)
+
+### Check 4: Semantic Accuracy
+
+**How it goes wrong**: Vector search finds semantically similar but factually wrong chunks
+```
+Query: "2023 revenue figures"
+Retrieved: "2022 revenue was strong, showing 15% growth"
+Problem: Similar topic, wrong year
+```
+
+**Test to run**: Create queries with specific constraints (dates, versions, locations), verify retrieval respects constraints
+**What to measure**: Constraint accuracy rate (% of results that match specific requirements)
+
+### Check 5: Multi-Chunk Assembly
+
+**How it goes wrong**: Complete answer requires multiple chunks but they aren't retrieved together
+```
+Query: "Complete onboarding process"
+Chunk A (not retrieved): "Step 1: Create account, Step 2: Verify email"
+Chunk B (retrieved): "Step 3: Set preferences, Step 4: Complete profile"
+Result: Incomplete answer
+```
+
+**Test to run**: Identify 10 topics requiring multi-chunk answers, verify co-retrieval
+**What to measure**: Multi-chunk success rate
 
 ---
 
 ## V. Evaluating Your Generation: Beyond "Does it Look Right?" (10 minutes)
 
-### The Three Pillars of Generation Quality
+### Check 1: Faithfulness to Context
 
-#### 1. Faithfulness (Does it stick to the context?)
-**What to Measure**:
-- Hallucination rate: Claims not supported by retrieved context
-- Attribution accuracy: Can you trace each claim back to source?
-
-**Practical Test**:
-```python
-def check_faithfulness(answer, context):
-    claims = extract_claims(answer)
-    supported_claims = []
-    for claim in claims:
-        if claim_is_supported(claim, context):
-            supported_claims.append(claim)
-    return len(supported_claims) / len(claims)
-```
-
-**Example Evaluation**:
+**How it goes wrong**: LLM adds plausible but unsupported information
 ```
 Context: "Our service processes up to 1,000 requests per minute."
-Answer: "The service handles approximately 1,000 requests per minute, with 99.9% uptime."
-Faithfulness Score: 0.5 (1/2 claims supported - uptime claim is hallucinated)
+Generated answer: "The service handles approximately 1,000 requests per minute, with 99.9% uptime and enterprise-grade security."
+Problem: Uptime and security claims aren't in the context
 ```
 
-#### 2. Completeness (Did it answer the whole question?)
-**What to Look For**:
-- Multi-part questions: Are all parts addressed?
-- Implicit requirements: Does it provide actionable information?
+**Test to run**: Extract claims from answers, verify each claim appears in retrieved context
+**What to measure**: Faithfulness rate (% of claims supported by context, target: >95%)
 
-**Example**:
+### Check 2: Answer Completeness
+
+**How it goes wrong**: LLM answers only part of multi-part questions
 ```
 Question: "How do I upgrade my subscription and what are the pricing tiers?"
-Bad Answer: "You can upgrade in settings." (missing pricing info)
-Good Answer: "You can upgrade in settings. Our tiers are Basic ($10), Pro ($30), Enterprise (custom pricing)."
+Generated answer: "You can upgrade in the account settings page."
+Problem: Missing pricing information
 ```
 
-#### 3. User Experience Quality
-**Practical Metrics**:
-- **Clarity**: Can a non-expert understand it?
-- **Actionability**: Does it provide next steps?
-- **Appropriate Length**: Not too verbose, not too brief
+**Test to run**: Create multi-part questions, check if all parts get addressed
+**What to measure**: Completeness rate (% of question components answered)
 
-### Generation Red Flags
+### Check 3: Confident Hallucination
 
-#### 1. The "Confident Hallucination"
-**Problem**: LLM sounds authoritative about made-up information
-**Test**: Create questions that can't be answered from context, measure how often LLM admits uncertainty
+**How it goes wrong**: LLM fabricates authoritative-sounding information when context is insufficient
+```
+Context: "Our API supports webhooks."
+Question: "What's the rate limit for webhooks?"
+Generated answer: "Webhook rate limits are set to 100 requests per minute by default."
+Problem: Rate limit info not in context, but sounds authoritative
+```
 
-#### 2. The "Context Overload"
-**Problem**: LLM gets lost when given too much context
-**Test**: Vary context length, measure answer quality degradation
+**Test to run**: Ask questions that can't be answered from context, measure how often LLM invents answers vs. admits uncertainty
+**What to measure**: Hallucination rate when context is insufficient
+
+### Check 4: Context Utilization
+
+**How it goes wrong**: LLM ignores relevant context and uses pre-training knowledge instead
+```
+Context: "Our refund policy changed in 2024: full refunds within 30 days."
+Question: "What's your refund policy?"
+Generated answer: "Most companies offer 14-day refund policies."
+Problem: Ignored specific company context
+```
+
+**Test to run**: Provide context that contradicts common knowledge, verify LLM uses context over training data
+**What to measure**: Context adherence rate
+
+### Check 5: Practical Usefulness
+
+**How it goes wrong**: Technically correct but practically useless answers
+```
+Question: "How do I reset my password?"
+Generated answer: "Password reset functionality exists in the system and can be accessed through the appropriate interface."
+Problem: Correct but not actionable
+```
+
+**Test to run**: Human evaluation asking "Could you follow these instructions successfully?"
+**What to measure**: Actionability score (% of answers that provide clear next steps)
 
 ---
 
@@ -229,42 +236,42 @@ Good Answer: "You can upgrade in settings. Our tiers are Basic ($10), Pro ($30),
 ### Weekly Evaluation Routine
 
 #### 1. Chunking Health Check
-- [ ] Sample 20 random chunks, verify coherence
-- [ ] Check metadata accuracy on new content
-- [ ] Verify no critical information spans are split
+- [ ] Sample 20 random chunks, verify coherence rate >95%
+- [ ] Test metadata accuracy on 50 chunks
+- [ ] Run coverage test: 20 questions that should be answerable
 
-#### 2. Retrieval Performance Audit
-- [ ] Hit rate > 90% on test queries
-- [ ] Precision@3 > 80%
-- [ ] Sufficiency check: Can humans answer from retrieved context?
-- [ ] Test recent edge cases that came up in production
+#### 2. Retrieval Performance Audit  
+- [ ] Relevance rate >85% on 100 query-chunk pairs
+- [ ] Sufficiency rate >75% (can humans answer from context?)
+- [ ] Precision@3 >80% on 50 test queries
+- [ ] Check constraint accuracy on date/version-specific queries
 
 #### 3. Generation Quality Monitoring
-- [ ] Faithfulness score > 95%
-- [ ] Zero tolerance for confident hallucinations
-- [ ] User feedback sentiment trending positive
+- [ ] Faithfulness rate >95% (claims supported by context)
+- [ ] Test hallucination resistance: questions with insufficient context
+- [ ] Completeness check on multi-part questions
+- [ ] Actionability score from human evaluators
 
 ### The One Thing to Remember
-**Don't just measure performance—measure the right kind of performance for each stage.**
+Each stage has its own job. Measure what matters for that job.
 
-Your chunking doesn't need to be semantically perfect, it needs to be complete and searchable.
-Your retrieval doesn't need to find everything, it needs to find sufficient relevant information.
-Your generation doesn't need to be creative, it needs to be faithful and useful.
+Chunking: Complete and findable information
+Retrieval: Relevant and sufficient context  
+Generation: Faithful and actionable answers
 
 ---
 
 ## Conclusion: Take Action Monday Morning
 
 ### Your Homework
-1. **Pick one stage** that's causing the most pain
-2. **Implement the diagnostic tests** we covered for that stage
-3. **Run the evaluation** on your current system
-4. **Fix the highest-impact issue** you find
-5. **Repeat** for the next stage
+1. **Pick one stage** causing the most pain
+2. **Run one diagnostic test** from this talk  
+3. **Fix the biggest issue** you find
+4. **Measure the improvement**
+5. **Move to the next stage**
 
 ### Resources
 - Evaluation frameworks: RAGAS, DeepEval, LangFuse
-- Metrics implementation examples: [GitHub repo link]
-- Further reading: RAG failure funnel deep dive
+- Code examples: [GitHub repo link]
 
-**Remember**: Perfect is the enemy of good. Start measuring something, anything, and iterate from there.
+Start with one test. Perfect is the enemy of good.
