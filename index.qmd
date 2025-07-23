@@ -24,6 +24,7 @@ RAG systems fail silently, and teams struggle to debug them.
 :::
 
 :::{.column width="50%"}
+<br>
 
 - "answer looks wrong" provides no actionable debugging path
 - Silent failures accumulate as technical debt  
@@ -36,7 +37,7 @@ RAG systems fail silently, and teams struggle to debug them.
 
 ---
 
-## About the Presenter
+## About Me
 
 ::: {.columns}
 
@@ -45,17 +46,18 @@ RAG systems fail silently, and teams struggle to debug them.
 :::
 
 ::: {.column width="70%"}
-**Skylar Payne**  
+:::{.special}
+Empowering **you** to build AI products users **love**.  
+And permanently ditch those 3 AM debugging sessions.
+:::
 
-> I'm not a career consultant. I'm a _builder_.
+- Building AI products for **over a decade** at Google, LinkedIn, and in AI based diagnostics (healthcare)
+- Trained **over 100 engineers** to build AI products
+- Hands on executive experience building the teams that build AI products
 
-😵‍💫 AI is hard. So many questions, options, tradeoffs. I can help.
+**Fun fact**: my favorite movie is Mean Girls (I have a party for it every October 3rd).
 
-- **Decade of experience** building AI products at Google, LinkedIn, and in AI based diagnostics (healthcare)
-- **Specializes in**: helping product & engineering teams to build AI products via evaluation-driven development
-- **Philosophy**: Make it simple. Make it happen. Make it fun.
-
-Fun fact: my favorite movie is Mean Girls (I have a party for it every October 3rd).
+<div class="tenor-gif-embed" data-postid="4135521" data-share-method="host" data-aspect-ratio="1.77778" data-width="30%"><a href="https://tenor.com/view/so-fetch-mean-girls-fetch-trending-look-good-gif-4135521">So Fetch GIF</a>from <a href="https://tenor.com/search/so+fetch-gifs">So Fetch GIFs</a></div> <script type="text/javascript" async src="https://tenor.com/embed.js"></script>
 :::
 
 :::
@@ -70,6 +72,47 @@ Fun fact: my favorite movie is Mean Girls (I have a party for it every October 3
 
 :::{.fragment}
 Seriously. That's it.
+:::
+
+:::{.fragment}
+I really mean it. Look at it.
+:::
+
+---
+
+## Guiding principle
+
+:::{.fragment .special}
+evaluate everything, independently if possible
+:::
+
+:::{.fragment}
+Most people do not "eval" anything.
+:::
+
+:::{.fragment}
+Fewer people evaluate generation.
+:::
+
+:::{.fragment}
+Even fewer people evaluate retrieval.
+:::
+
+:::{.fragment}
+Even fewer people evaluate indexing.
+:::
+
+:::{.fragment}
+To fix anything, you must understand *where* it is broken.  
+Evaluation at multiple critical stages is the only way to do this consistently.
+:::
+
+---
+
+## Common Pitfalls
+
+:::{.fragment}
+Every single pitfall here is something I have seen in my work with clients. And addressing it has always provided signficant improvements.
 :::
 
 ---
@@ -92,8 +135,8 @@ Reality: Integration exists but no docs were written
 The cost: Lost customers who assume you don't support their stack
 ```
 
-<!--TODO: the evaluation test should evaluate the % of queries which have relevant chunks across the entire corpus-->
-**Evaluation Test**: Create "must answer" questions for your use cases - verify corpus coverage
+**Evaluation Test**:  
+Measure % of queries that return relevant chunks across your entire corpus
 
 :::
 
@@ -109,11 +152,13 @@ The cost: Lost customers who assume you don't support their stack
 
 ## Pitfall #2: Information Extraction
 
-:::{.special}
+:::{.columns}
+
+:::{.special style="margin-bottom: 2em;"}
 Do we understand the content well enough?
 :::
 
-
+:::{.column width="60%"}
 ```
 Bad format:
 "See attached PDF for API documentation (link broken)"
@@ -123,20 +168,30 @@ Good format:
 Example: Authorization: Bearer your_token_here"
 ```
 
-<!--TODO: the evaluation test here should be to evaluate information extraction; eg are tables, etc extracted correctly?-->
-**Evaluation Test**: Audit 20 docs - can key information be extracted without external dependencies?
+**Evaluation Test**:  
+Verify tables, code blocks, and structured data are correctly parsed
 
+:::
+
+:::{.column width="10%"}
+:::
+
+:::{.column width="30%"}
 ![](assets/information_extraction.png)
+:::
+:::
 
 ---
 
 ## Pitfall #3: Chunk Quality
 
-:::{.special}
+:::{.columns}
+
+:::{.special style="margin-bottom: 2em;"}
 Meaningful chunking that balances relevancy?
 :::
 
-
+:::{.column width="60%"}
 ```
 Bad chunking:
 Chunk 1: "To set up authentication, first install the SDK"
@@ -150,19 +205,30 @@ Chunk 1: "Authentication Setup:
 3. Add auth middleware to your app"
 ```
 
-<!--TODO: test should be to look at a sample of large chunks, small chunks, chunks retrieved very often, chunks retrieved rarely, etc-->
-**Evaluation Test**: Sample 50 chunks - can each standalone answer a complete question?
+**Evaluation Test**:  
+Look at samples of large chunks, small chunks, frequently retrieved, and rarely retrieved chunks
 
+:::
+
+:::{.column width="10%"}
+:::
+
+:::{.column width="30%"}
 ![](assets/chunk_quality.png)
+:::
+:::
 
 ---
 
 ## Pitfall #4: Query Rejection
 
-:::{.special}
+:::{.columns}
+
+:::{.special style="margin-bottom: 2em;"}
 Was the query well-formed?
 :::
 
+:::{.column width="60%"}
 ```
 Unclear query: "thing broken"
 Clear query: "Why is my API authentication failing with 401 error?"
@@ -171,20 +237,30 @@ Unclear query: "pricing info"
 Clear query: "What are the pricing tiers for enterprise customers?"
 ```
 
-<!--TODO: test should be rejection rate or elicitation rate of unclear queries-->
-**Evaluation Test**: Sample 20 user queries - could a human understand the intent?
+**Evaluation Test**:  
+Calculate rejection rate and elicitation rate for unclear queries
 
+:::
+
+:::{.column width="10%"}
+:::
+
+:::{.column width="30%"}
 ![](assets/vague_query.png)
+:::
+:::
 
 ---
 
 ## Pitfall #5: Retrieval Sufficiency
 
-:::{.special}
+:::{.columns}
+
+:::{.special style="margin-bottom: 2em;"}
 Did we get enough relevant docs?
 :::
 
-
+:::{.column width="60%"}
 ```
 Query: "How do I implement user segmentation?"
 Retrieved chunks:
@@ -195,19 +271,30 @@ Retrieved chunks:
 Missing: The actual implementation steps!
 ```
 
-<!--TODO: test should be to evaluate the % of queries which have sufficient information retrieved-->
-**Evaluation Test**: Give only retrieved chunks to humans - "Can you complete the task from this info?"
+**Evaluation Test**:  
+Evaluate % of queries that retrieve sufficient information to answer the question completely
 
+:::
+
+:::{.column width="10%"}
+:::
+
+:::{.column width="30%"}
 ![](assets/sufficiency.png)
+:::
+:::
 
 ---
 
 ## Pitfall #6: Hallucination
 
-:::{.special}
+:::{.columns}
+
+:::{.special style="margin-bottom: 2em;"}
 Did the generation hallucinate?
 :::
 
+:::{.column width="60%"}
 ```
 Retrieved Context: "Our API rate limit is 1,000 requests per minute"
 Generated Answer: "The API supports up to 500 requests per minute 
@@ -216,10 +303,18 @@ with burst capacity up to 2,000 for enterprise users"
 Problem: Where did "500" and "enterprise burst capacity" come from?
 ```
 
-<!--TODO: test should be to force in text citations and to validate them-->
-**Evaluation Test**: Extract all claims from generated answers, verify each exists in retrieved context
+**Evaluation Test**:  
+Force in-text citations in responses and validate each citation exists and is relevant
 
+:::
+
+:::{.column width="10%"}
+:::
+
+:::{.column width="30%"}
 ![](assets/hallucination.png)
+:::
+:::
 
 ---
 
@@ -231,17 +326,21 @@ Domain specific is always better, but I have found this to be a decent starting 
 ```{mermaid}
 flowchart LR
   A[Query Understood]
-  B[Relevant Retrieval]
-  C[Sufficient Retrieval]
-  D[No Hallucination]
-  E[Correct Answer]
-  F[Right Format]
+  B[Relevant Documents Exist]
+  C[Relevant Documents Well-Structured]
+  D[Relevant Documents Retrieved]
+  E[Sufficient Retrieval]
+  F[No Hallucination]
+  G[Correct Answer]
+  H[Right Format]
 
   A --> B
   B --> C
   C --> D
   D --> E
   E --> F
+  F --> G
+  G --> H
 ```
 
 - queries that are vague or ambiguous need to elicit more information
@@ -267,7 +366,9 @@ flowchart LR
 **Sign up for my newsletter!**
 :::
 
-![](https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://subscribe.skylarbpayne.com)
+Empowering *you* to build AI products users **love**.
+
+![](assets/newsletter-qr.png)
 :::
 
 :::

@@ -37,6 +37,15 @@ $mermaid-node-fg-color: $color-p1;
 
 /*-- scss:rules --*/
 
+.reveal .title {
+    font-size: 4em !important;
+}
+
+.reveal .subtitle {
+    font-size: 2em !important;
+    color: $color-p1 !important;
+}
+
 .reveal .special {
     color: $primary;
     // margin-bottom: 0.3em;
