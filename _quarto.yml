@@ -1,0 +1,6 @@
+project:
+  type: website
+
+website:
+  title: "10x Your RAG Evaluation by Avoiding these Pitfalls"
+  navbar: false
