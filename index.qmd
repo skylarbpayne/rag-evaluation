@@ -76,11 +76,13 @@ Seriously. That's it.
 
 ## Pitfall #1: Corpus Coverage
 
-:::{.special}
+:::{.columns}
+
+:::{.special style="margin-bottom: 2em;"}
 Do we have all the documents we need?
 :::
 
-
+:::{.column width="60%"}
 ```
 Use case: "How do I integrate with Salesforce?"
 Search results: 0 relevant chunks
@@ -93,7 +95,15 @@ The cost: Lost customers who assume you don't support their stack
 <!--TODO: the evaluation test should evaluate the % of queries which have relevant chunks across the entire corpus-->
 **Evaluation Test**: Create "must answer" questions for your use cases - verify corpus coverage
 
+:::
+
+:::{.column width="10%"}
+:::
+
+:::{.column width="30%"}
 ![](assets/corpus_coverage.png)
+:::
+:::
 
 ---
 
@@ -164,7 +174,7 @@ Clear query: "What are the pricing tiers for enterprise customers?"
 <!--TODO: test should be rejection rate or elicitation rate of unclear queries-->
 **Evaluation Test**: Sample 20 user queries - could a human understand the intent?
 
-![](assets/query_rejection.png)
+![](assets/vague_query.png)
 
 ---
 
@@ -233,6 +243,13 @@ flowchart LR
   D --> E
   E --> F
 ```
+
+- queries that are vague or ambiguous need to elicit more information
+- queries without any relevant retrieval likely mean information extraction is broken
+- queries that do not have sufficient retrieval likely mean retrieval needs work
+- queries that have hallucination likely mean context/prompting needs work
+- queries that have incorrect answers may mean stronger models, reasoning, etc needed
+- queries that have the wrong tone/format may require more examples, better prompting, etc
 
 ---
 
