@@ -83,7 +83,7 @@ I really mean it. Look at it.
 ## Guiding principle
 
 :::{.fragment .special}
-evaluate everything, independently if possible
+evaluate everything, all the time, independently if possible
 :::
 
 :::{.fragment}
@@ -102,7 +102,10 @@ Even fewer people evaluate retrieval.
 Even fewer people evaluate indexing.
 :::
 
-:::{.fragment}
+:::{.fragment .special}
+<br>
+<br>
+
 To fix anything, you must understand *where* it is broken.  
 Evaluation at multiple critical stages is the only way to do this consistently.
 :::
@@ -112,7 +115,8 @@ Evaluation at multiple critical stages is the only way to do this consistently.
 ## Common Pitfalls
 
 :::{.fragment}
-Every single pitfall here is something I have seen in my work with clients. And addressing it has always provided signficant improvements.
+Every single pitfall here is something I have seen in my work with clients.  
+And addressing it has always provided signficant improvements.
 :::
 
 ---
@@ -169,7 +173,7 @@ Example: Authorization: Bearer your_token_here"
 ```
 
 **Evaluation Test**:  
-Verify tables, code blocks, and structured data are correctly parsed
+Verify tables, code blocks, and structured data are correctly parsed/extracted
 
 :::
 
@@ -200,7 +204,7 @@ Chunk 3: "Finally, add the auth middleware to your app"
 
 Good chunking:
 Chunk 1: "Authentication Setup:
-1. Install SDK: npm install frigade-sdk
+1. Install SDK: npm install our-custom-sdk
 2. Configure API key in dashboard  
 3. Add auth middleware to your app"
 ```
@@ -318,37 +322,60 @@ Force in-text citations in responses and validate each citation exists and is re
 
 ---
 
-## A Generic Failure Funnel for RAG Systems
+## Pitfall #7: Dynamic Data
 
-This is a generic failure funnel I like to use when evaluating RAG systems.  
-Domain specific is always better, but I have found this to be a decent starting point.
+:::{.columns}
 
-```{mermaid}
-flowchart LR
-  A[Query Understood]
-  B[Relevant Documents Exist]
-  C[Relevant Documents Well-Structured]
-  D[Relevant Documents Retrieved]
-  E[Sufficient Retrieval]
-  F[No Hallucination]
-  G[Correct Answer]
-  H[Right Format]
+:::{.special style="margin-bottom: 2em;"}
+When your RAG results change, is it because of a change in the data or the model?
+:::
 
-  A --> B
-  B --> C
-  C --> D
-  D --> E
-  E --> F
-  F --> G
-  G --> H
+:::{.column width="60%"}
+```
+Search result on 2025-01-07: "What is the API rate limit?" => 1,000 requests per minute
+
+Search result on 2025-06-01: "What is the API rate limit?" => 2,500 requests per minute
 ```
 
-- queries that are vague or ambiguous need to elicit more information
-- queries without any relevant retrieval likely mean information extraction is broken
-- queries that do not have sufficient retrieval likely mean retrieval needs work
-- queries that have hallucination likely mean context/prompting needs work
-- queries that have incorrect answers may mean stronger models, reasoning, etc needed
-- queries that have the wrong tone/format may require more examples, better prompting, etc
+Data is generally not static. This creates a challenge for robust evaluation.
+You may start getting very different results.
+
+**Evaluation Test**:  
+
+Version and ideally track history of your data
+:::
+
+:::{.column width="10%"}
+:::
+
+:::{.column width="30%"}
+![](assets/timetravel.jpeg)
+:::
+:::
+
+---
+
+## In Summary...
+
+:::{.columns}
+
+:::{.column width="50%"}
+:::{.fragment .special}
+evaluate everything, all the time, independently if possible
+:::
+
+:::{.fragment}
+<br>
+<br>
+**AND LOOK AT YOUR DATA.**
+:::
+:::
+
+
+:::{.column width="50%"}
+![](assets/databook.jpeg)
+:::
+:::
 
 ---
 
@@ -359,6 +386,9 @@ flowchart LR
 :::{.columns}
 
 :::{.column width="50%"}
+<br>
+<br>
+<div class="tenor-gif-embed" data-postid="4135521" data-share-method="host" data-aspect-ratio="1.77778" data-width="80%"><a href="https://tenor.com/view/so-fetch-mean-girls-fetch-trending-look-good-gif-4135521">So Fetch GIF</a>from <a href="https://tenor.com/search/so+fetch-gifs">So Fetch GIFs</a></div> <script type="text/javascript" async src="https://tenor.com/embed.js"></script>
 :::
 
 :::{.column width="50%"}
@@ -366,7 +396,8 @@ flowchart LR
 **Sign up for my newsletter!**
 :::
 
-Empowering *you* to build AI products users **love**.
+Empowering *you* to build AI products users **love**.  
+Without the late night debugging.
 
 ![](assets/newsletter-qr.png)
 :::
